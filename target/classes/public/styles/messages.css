@@ -1,0 +1,42 @@
+body{
+   background-color: rgb(200, 239, 190);
+}
+
+table{
+   width: 100%;
+   text-align:center;
+   background-color: rgb(180, 209, 180);
+   border: thin solid black;
+   border-radius:10px;
+   margin-bottom:0px;
+}
+
+table.button-table{
+    padding: 0px;
+}
+
+th.headers{
+    background-color: rgb(100, 180, 160);
+    border-radius: 10px;
+    padding: 0px;
+}
+
+.messages{
+    border-radius: 10px;
+    border-top:0.5px;
+    font-size: 16px;
+    color: black;
+}
+
+.submit-button{
+      display: block;
+      width: 10%;
+      border: none;
+      background-color: rgb(100, 180, 160);
+      color: white;
+      font-size: 30px;
+      cursor: pointer;
+      text-align: center;
+      border-radius:10px;
+      margin:auto;
+}

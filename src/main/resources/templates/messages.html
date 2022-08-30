@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Messages</title>
+    <link rel="stylesheet" type="text/css" media="all"
+          href="/styles/messages.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="/show.js"></script>
+</head>
+<body onload="refreshOnce()">
+<header>
+    <table class="button-table">
+        <tr>
+            <td>
+                <button th:if="${isOpen}" onclick="connectMessage(), location.href='/vdv463-sim/connection'"
+                        type="button">Connect
+                </button>
+                <button th:unless="${isOpen}" onclick="exitMessage(), location.href='/vdv463-sim/exit'" type="button">
+                    Disconnect
+                </button>
+                <button th:unless="${isOpen}" onclick="refreshPage(),location.href='/vdv463-sim/messages/new/boot'"
+                        type="button">Send Boot Notification
+                </button>
+                <button th:unless="${isOpen}" onclick="refreshPage(),location.href='/vdv463-sim/messages/new/charge'"
+                        type="button">Send Charging Request
+                </button>
+                <button onclick="refreshPage(),location.href='/vdv463-sim/messages'" type="button">History</button>
+                <button onclick="refreshPage(),location='/vdv463-sim/liquidation'" type="button">Clear</button>
+            </td>
+        </tr>
+    </table>
+</header>
+<div style="overflow-x:auto;">
+    <table class="messages">
+        <thead>
+        <tr>
+            <th class="headers">Type</th>
+            <th class="headers">Source</th>
+            <th class="headers">PresystemId</th>
+            <th class="headers">Timestamp</th>
+            <th class="headers">Id</th>
+            <th class="headers">Action</th>
+            <th class="headers">Payload</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="message" th:each="message : ${messageList}">
+            <td th:text="${message.type}">type</td>
+            <td th:text="${message.source}">source</td>
+            <td th:text="${message.presystemId}">presystem</td>
+            <td th:text="${message.timeStamp}">timestamp</td>
+            <td th:text="${message.id}">id</td>
+            <td th:text="${message.action}">action</td>
+            <td th:text="${message.payload}">payload<br></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<form th:action="@{/vdv463-sim/messages/new}" th:method="post" th:object="${newMessage}" onSubmit="refreshPage()">
+    <label>PresystemId</label>
+    <input type="text" th:field="*{presystemId}" th:placeholder="jeden" required/>
+    <label>Source</label>
+    <input type="text" th:field="*{source}" th:placeholder="BMS" required/>
+    <label>Type</label>
+    <select name="type" th:field="*{type}">
+        <option th:each="type : ${T(com.vdv463.client.communication.Message.Type).values()}"
+                th:value="${type}" th:text="${type}"></option>
+    </select>
+    <label class="radio">
+        <input type="radio" th:field="*{action}" th:value="BootNotification"/>
+        BootNotification
+    </label>
+    <label class="radio">
+        <input type="radio" th:field="*{action}" th:value="ProvideChargingRequests"/>
+        ProvideChargingRequests
+    </label>
+    <br>
+
+    <table class="box" style="display:none;" th:object="${newChargingRequestList}">
+        <thead>
+        <tr>
+            <td>ChargingPointId</td>
+            <td><input type="text" th:field="*{chargingPointId}"/></td>
+            <td>VehicleId</td>
+            <td><input type="text" th:field="*{vehicleId}"/></td>
+            <td>ChargingRequestId</td>
+            <td><input type="text" th:field="*{chargingRequestId}"/></td>
+            <td>ChargingProcessId</td>
+            <td><input type="text" th:field="*{chargingProcessId}"/></td>
+            <td>Priority</td>
+            <td><input type="number" th:field="*{priority}"/></td>
+        </tr>
+        <tr style="border-spacing:0 5em;">
+            <td>Instruction</td>
+            <td><select name="chargingInstruction" th:field="*{chargingInstruction}">
+                <option th:each="chargingInstruction : ${T(pl.com.ekoenergetyka.vdv463.messages.ChargingRequest.ChargingInstruction).values()}"
+                        th:value="${#strings.toUpperCase(chargingInstruction)}"
+                        th:text="${chargingInstruction}"></option>
+            </select></td>
+            <td>AdHocCharging</td>
+            <td><input type="checkbox" th:field="*{chargingRequestData.adHocCharging}"/></td>
+            <td>ExpectedSocAtArrival</td>
+            <td><input type="number" step="0.01" th:field="*{chargingRequestData.expectedSocAtArrival}"/></td>
+            <td>MinTargetSoc</td>
+            <td><input type="number" step="0.01" th:field="*{chargingRequestData.minTargetSoc}"/></td>
+            <td>MaxTargetSoc</td>
+            <td><input type="number" step="0.01" th:field="*{chargingRequestData.maxTargetSoc}"/></td>
+        </tr>
+        <tr style="border-spacing:0 5em;">
+            <td>PreconditioningRequest</td>
+            <td><select name="preconditioningRequest" th:field="*{automaticPreconditioning.preconditioningRequest}">
+                <option th:each="preconditioningRequest : ${T(pl.com.ekoenergetyka.vdv463.messages.AutomaticPreconditioning.PreconditioningRequest).values()}"
+                        th:value="${(preconditioningRequest).value()}"
+                        th:text="${preconditioningRequest}"></option>
+            </select></td>
+            <td>AmbientTemperature</td>
+            <td><input type="number" step="0.01" th:field="*{automaticPreconditioning.ambientTemperature}"/></td>
+        </tr>
+        </thead>
+        <div th:object="${newDates}">
+            <tr th:each="dateConverter, itemStat : *{dateConverters}">
+                <td th:text="*{dateConverters[__${itemStat.index}__].time[__${itemStat.index}__]}"></td>
+                <td><input type="date" th:field="*{dateConverters[__${itemStat.index}__].date}"/></td>
+                <td>Hour</td>
+                <td><input type="number" min="0" max="23" th:field="*{dateConverters[__${itemStat.index}__].hour}"/>
+                </td>
+                <td>Minute</td>
+                <td><input type="number" min="0" max="59" th:field="*{dateConverters[__${itemStat.index}__].minute}"/>
+                </td>
+                <td>Second</td>
+                <td><input type="number" min="0" max="59" th:field="*{dateConverters[__${itemStat.index}__].second}"/>
+                </td>
+                <td>NanoOfSecond</td>
+                <td><input type="number" min="0" max="999999999"
+                           th:field="*{dateConverters[__${itemStat.index}__].nanoOfSecond}"/></td>
+                <br>
+            </tr>
+        </div>
+    </table>
+    <input type="submit" class="submit-button" value="Send">
+</form>
+</body>
+</html>
